@@ -13,9 +13,18 @@ if (isset($_POST['submit']) && isset($_POST['title']) && isset($_POST['content']
             $finalPath = $target_dir . $fileName;
             if (in_array(pathinfo($finalPath, 4), $extensions_arr)) {
                 move_uploaded_file($_FILES['file']['tmp_name'], $finalPath);
-                $prepQuery = $connection->prepare("INSERT INTO notes (title, weekend, content, imgName, imgUrl) VALUES (?, ?, ?, ?, ?)");
                 $finalPath = 'upload/'.$finalPath;
-                $prepQuery->bind_param("sisss", $_POST['title'], $weekend, $_POST['content'], explode('.',$fileName)[0], $finalPath);
+
+                if (isset($_GET["id"])) {
+                    $id = (int) $_GET["id"];
+                    $prepQuery = $connection->prepare("UPDATE notes SET title = ?, weekend = ?, content = ?, created_at = current_timestamp, imgName= ?, imgUrl = ? WHERE id = ?");
+                    $prepQuery->bind_param("sisssi", $_POST['title'], $weekend, $_POST['content'], explode('.',$fileName)[0], $finalPath, $id);
+                }else {
+                    if(empty($_GET)) {
+                        $prepQuery = $connection->prepare("INSERT INTO notes (title, weekend, content, imgName, imgUrl) VALUES (?, ?, ?, ?, ?)");
+                        $prepQuery->bind_param("sisss", $_POST['title'], $weekend, $_POST['content'], explode('.',$fileName)[0], $finalPath);
+                    } else header('Location: ../index.php');
+                 }
                 if ($prepQuery->execute() === TRUE) {
                     header('Location: ../index.php');
                 }else {
